@@ -5,18 +5,18 @@ export interface Results {
   totalCount: number;
   loading: boolean;
 }
-export interface State<E,EI,Q> {
+export interface State<Entity,EntityIn,Query> {
   queries: {
-    [queryName:string]: Q | undefined;
+    [queryName:string]: Query | undefined;
   };
   results: {
     [queryName:string]: Results | undefined;
   };
   entities: {
-    [entityId:string]: E | undefined;
+    [entityId:string]: Entity | undefined;
   };
   entitiesIn: {
-    [editorId:string]: EI | undefined;
+    [editorId:string]: EntityIn | undefined;
   };
   busy: {
     [entityId:string]: boolean | undefined;
@@ -29,24 +29,27 @@ export interface State<E,EI,Q> {
 }
 let nextCrudId = 1;
 
-export interface SetQueryAction<Q> {
+export interface SetQueryAction<Query> {
   type: 'CRUD_SET_QUERY';
   payload: {
+    crudId: number;
     queryName: string;
-    query: Q;
+    query: Query;
   };
 }
-export interface StoreResultAction<E> {
+export interface StoreResultAction<Entity> {
   type: 'CRUD_STORE_RESULT';
   payload: {
+    crudId: number;
     queryName: string;
-    result: Result<E>;
+    result: Result<Entity>;
   };
 }
 
 export interface SetLoadingAction {
   type: 'CRUD_SET_LOADING';
   payload: {
+    crudId: number;
     queryName: string;
     loading: boolean;
   };
@@ -55,28 +58,32 @@ export interface SetLoadingAction {
 export interface SetBusyAction {
   type: 'CRUD_SET_BUSY';
   payload: {
+    crudId: number;
     entityId: string;
     busy: boolean;
   };
 }
 
-export interface SetEntityAction<E> {
+export interface SetEntityAction<Entity> {
   type: 'CRUD_SET_ENTITY';
   payload: {
+    crudId: number;
     entityId: string;
-    entity: E;
+    entity: Entity;
   };
 }
-export interface SetEntityInAction<EI> {
+export interface SetEntityInAction<EntityIn> {
   type: 'CRUD_SET_ENTITY_IN';
   payload: {
+    crudId: number;
     editorId: string;
-    entityIn: EI;
+    entityIn: EntityIn;
   };
 }
 export interface SetSelectedAction {
   type: 'CRUD_SET_SELECTED';
   payload: {
+    crudId: number;
     queryName: string;
     selected: {
       [entityId:string]: boolean | undefined
@@ -86,35 +93,36 @@ export interface SetSelectedAction {
 export interface ClearSelectedAction {
   type: 'CRUD_CLEAR_SELECTED';
   payload: {
+    crudId: number;
     queryName: string;
   };
 }
-export type Action<E,EI,Q> = SetQueryAction<Q>
-  | StoreResultAction<E>
+export type Action<Entity,EntityIn,Query> = SetQueryAction<Query>
+  | StoreResultAction<Entity>
   | SetLoadingAction
   | SetBusyAction
-  | SetEntityAction<E>
-  | SetEntityInAction<EI>
+  | SetEntityAction<Entity>
+  | SetEntityInAction<EntityIn>
   | SetSelectedAction
   | ClearSelectedAction;
 
 export const defEditorId = 'default';
-export interface Actions<E,EI,Q> {
-  setQuery: (queryName:string, query:Q) => SetQueryAction<Q>;
-  storeResult: (queryName:string, result:Result<E>) => StoreResultAction<E>;
+export interface Actions<Entity,EntityIn,Query> {
+  setQuery: (queryName:string, query:Query) => SetQueryAction<Query>;
+  storeResult: (queryName:string, result:Result<Entity>) => StoreResultAction<Entity>;
   setLoading: (queryName:string, loading:boolean) => SetLoadingAction;
   setBusy: (entityId:string, busy:boolean) => SetBusyAction;
-  setEntity: (entityId:string, entity:E) => SetEntityAction<E>;
-  setEntityIn: (editorId:string, entityIn:EI) => SetEntityInAction<EI>;
+  setEntity: (entityId:string, entity:Entity) => SetEntityAction<Entity>;
+  setEntityIn: (editorId:string, entityIn:EntityIn) => SetEntityInAction<EntityIn>;
   setSelected: (queryName:string, selected:{[entityId:string]: boolean | undefined}) => SetSelectedAction;
   clearSelected: (queryName:string) => ClearSelectedAction;
 };
 
 export const defQueryName = 'default';
-export function create<E,EI,Q>(getEntityId: (entity:E) => string) {
+export function create<Entity,EntityIn,Query>(getEntityId: (entity:Entity) => string) {
   const crudId = nextCrudId++;
 
-  const defState:State<E,EI,Q> = {
+  const defState:State<Entity,EntityIn,Query> = {
     queries: {},
     results: {},
     entities: {},
@@ -124,14 +132,14 @@ export function create<E,EI,Q>(getEntityId: (entity:E) => string) {
   };
   const actions = {
     setQuery: createAction('CRUD_SET_QUERY', 
-      resolve => (queryName: string, query:Q) => resolve({
+      resolve => (queryName: string, query:Query) => resolve({
         crudId,
         queryName,
         query
       })
     ),
     storeResult: createAction('CRUD_STORE_RESULT',
-      resolve => (queryName:string, result:Result<E>) => resolve({
+      resolve => (queryName:string, result:Result<Entity>) => resolve({
         crudId,
         queryName,
         result
@@ -152,14 +160,14 @@ export function create<E,EI,Q>(getEntityId: (entity:E) => string) {
       })
     ),
     setEntity: createAction('CRUD_SET_ENTITY',
-      resolve => (entityId:string, entity:E) => resolve({
+      resolve => (entityId:string, entity:Entity) => resolve({
         crudId,
         entityId,
         entity
       })
     ),
     setEntityIn: createAction('CRUD_SET_ENTITY_IN',
-      resolve => (editorId:string, entityIn:EI) => resolve({
+      resolve => (editorId:string, entityIn:EntityIn) => resolve({
         crudId,
         editorId,
         entityIn
@@ -182,7 +190,7 @@ export function create<E,EI,Q>(getEntityId: (entity:E) => string) {
       })
     )
   };
-  function reducer(state:State<E,EI,Q> = defState, action:ActionType<typeof actions>) {
+  function reducer(state:State<Entity,EntityIn,Query> = defState, action:ActionType<typeof actions>) {
     if (action.payload.crudId !== crudId) {
       return state;
     }
@@ -197,7 +205,7 @@ export function create<E,EI,Q>(getEntityId: (entity:E) => string) {
           }
         };
       case getType(actions.storeResult):
-        const entities:{[entityId:string]: E | undefined} = {};
+        const entities:{[entityId:string]: Entity | undefined} = {};
         const r = action.payload.result;
         r.result.forEach(e => {
           entities[getEntityId(e)] = e;
@@ -208,10 +216,10 @@ export function create<E,EI,Q>(getEntityId: (entity:E) => string) {
             ...state.entities,
             ...entities
           },
-          queries: {
+          results: {
             ...state.queries,
             [action.payload.queryName]: {
-              results: r.result.map(e => getEntityId(e)),
+              result: r.result.map(e => getEntityId(e)),
               totalCount: r.totalCount,
               loading: false
             }
@@ -223,6 +231,8 @@ export function create<E,EI,Q>(getEntityId: (entity:E) => string) {
           results: {
             ...state.results,
             [action.payload.queryName]: {
+              result: [],
+              totalCount: 0,
               ...state.results[action.payload.queryName],
               loading: action.payload.loading
             }
