@@ -9,22 +9,22 @@ import {
   State as DummyState
 } from './actions/dummy-crud';
 
-import {createStandardAction, ActionType} from 'typesafe-actions';
+import {
+  crud as dummy2, 
+  Action as Dummy2Action, 
+  State as Dummy2State
+} from './actions/dummy2-crud';
 
 export interface RootState {
   dummy: DummyState;
+  dummy2: Dummy2State;
 }
 
-export const actions = {
-  test: createStandardAction('TEST_ACTION')<{test:string}>()
-};
-
-type TestAction = ActionType<typeof actions>;
-
-export type RootAction = DummyAction | TestAction;
+export type RootAction = DummyAction | Dummy2Action;
 
 const reducers:ReducersMapObject<RootState, RootAction> = {
-  dummy: dummy.reducer
+  dummy: dummy.reducer,
+  dummy2: dummy2.reducer
 }; 
 export const rootReducer = combineReducers(reducers);
 
