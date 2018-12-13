@@ -10,12 +10,14 @@ export interface Client<E,EI,Q> {
 }
 
 export function create<
-  E,EI,Q,RS, RA extends Action<E,EI,Q> & ReduxAction<any>
+  E,EI,Q,RS
 >(
   actions:Actions<E,EI,Q>, 
   client:Client<E,EI,Q>, 
   getCrudState:(rs:RS) => State<E,EI,Q>
 ) {
+  type RA  = Action<E,EI,Q>
+
   function fetch(queryName:string, query:Q):ThunkAction<Promise<Result<E> | undefined>, RS, void, RA> {
     return async (dispatch:ThunkDispatch<RS, void, RA>) => {
       try {
